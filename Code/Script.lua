@@ -31,14 +31,52 @@ function AddInfoBar()
         BorderWidth = 1,
     }, interface)
 
-    local grid_resources = XWindow:new({
-        Id = "idGridResourceBar",
+    local funding_section = XWindow:new({
+        Id = "idFundingBar",
         LayoutMethod = "HList",
-        HAlign = "left",
         VAlign = "center",
         HandleMouse = true,
         RolloverTemplate = "Rollover",
-        Padding = box(0, 0, 0, 0),
+        Padding = box(0, 0, 10, 0),
+    }, bar)
+
+    XText:new({
+        Id = "idResourceBarFundingDisplay",
+        MinWidth = 25,
+        TextColor = RGB(255, 255, 255),
+        RolloverTextColor = RGB(255, 255, 255),
+    }, funding_section)
+
+    funding_section:SetRolloverTitle(T{T{3613, "Funding"}, UICity})
+    funding_section:SetRolloverText(T{
+        ResourceOverviewObj:GetFundingRollover(),
+        UICity,
+    })
+
+    local research_section = XWindow:new({
+        Id = "idResearchBar",
+        LayoutMethod = "HList",
+        VAlign = "center",
+        HandleMouse = true,
+        RolloverTemplate = "Rollover",
+        Padding = box(10, 0, 10, 0),
+    }, bar)
+
+    AddResourceDisplay(research_section, "Research", "UI/Icons/res_experimental_research.tga")
+
+    research_section:SetRolloverTitle(T{T{357380421238, "Research"}, UICity})
+    research_section:SetRolloverText(T{
+        ResourceOverviewObj:GetResearchRollover(),
+        UICity,
+    })
+
+    local grid_resources = XWindow:new({
+        Id = "idGridResourceBar",
+        LayoutMethod = "HList",
+        VAlign = "center",
+        HandleMouse = true,
+        RolloverTemplate = "Rollover",
+        Padding = box(10, 0, 5, 0),
     }, bar)
 
     AddResourceDisplay(grid_resources, "Power", "UI/Icons/res_electricity.tga")
@@ -54,11 +92,10 @@ function AddInfoBar()
     local basic_resources = XWindow:new({
         Id = "idBasicResourceBar",
         LayoutMethod = "HList",
-        HAlign = "center",
         VAlign = "center",
         HandleMouse = true,
         RolloverTemplate = "Rollover",
-        Padding = box(10, 0, 10, 0),
+        Padding = box(5, 0, 5, 0),
     }, bar)
 
     AddResourceDisplay(basic_resources, "Metals", "UI/Icons/res_metal.tga")
@@ -75,11 +112,10 @@ function AddInfoBar()
     local advanced_resources = XWindow:new({
         Id = "idAdvancedResourceBar",
         LayoutMethod = "HList",
-        HAlign = "right",
         VAlign = "center",
         HandleMouse = true,
         RolloverTemplate = "Rollover",
-        Padding = box(0, 0, 0, 0),
+        Padding = box(5, 0, 0, 0),
     }, bar)
 
     AddResourceDisplay(advanced_resources, "Polymers", "UI/Icons/res_polymers.tga")
@@ -152,12 +188,19 @@ function UpdateInfoBar()
     UpdateStandardResourceDisplay(interface, "MachineParts")
     UpdateStandardResourceDisplay(interface, "Fuel")
 
+    interface["idResourceBarResearchDisplay"]:SetText(
+                                FormatIntWithSeparator(ResourceOverviewObj:GetEstimatedRP()))
+
+    interface["idResourceBarFundingDisplay"]:SetText(
+                                string.format("$%d M", ResourceOverviewObj:GetFunding() / 1000000))
+
     -- When you mouse over an element, its tooltip ('rollover') is updated
     -- automatically, but to have it update while it's open, it needs to be
     -- triggered
     XUpdateRolloverWindow(interface["idGridResourceBar"])
     XUpdateRolloverWindow(interface["idBasicResourceBar"])
     XUpdateRolloverWindow(interface["idAdvancedResourceBar"])
+    XUpdateRolloverWindow(interface["idResearchBar"])
 end
 
 function OnMsg.NewMinute()
