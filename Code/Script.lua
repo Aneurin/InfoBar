@@ -20,6 +20,7 @@ function AddInfoBar()
         -- than once
         return
     end
+    local this_mod_dir = debug.getinfo(2, "S").source:sub(2, -16)
     local bar = XWindow:new({
         Id = "idInfoBar",
         HAlign = "center",
@@ -37,7 +38,7 @@ function AddInfoBar()
         VAlign = "center",
         HandleMouse = true,
         RolloverTemplate = "Rollover",
-        Padding = box(0, 0, 10, 0),
+        Padding = box(0, 0, 5, 0),
     }, bar)
 
     XText:new({
@@ -50,7 +51,6 @@ function AddInfoBar()
     funding_section:SetRolloverTitle(T{T{3613, "Funding"}, UICity})
     funding_section:SetRolloverText(T{
         ResourceOverviewObj:GetFundingRollover(),
-        UICity,
     })
 
     local research_section = XWindow:new({
@@ -59,7 +59,7 @@ function AddInfoBar()
         VAlign = "center",
         HandleMouse = true,
         RolloverTemplate = "Rollover",
-        Padding = box(10, 0, 10, 0),
+        Padding = box(5, 0, 15, 0),
     }, bar)
 
     AddResourceDisplay(research_section, "Research", "UI/Icons/res_experimental_research.tga")
@@ -67,7 +67,6 @@ function AddInfoBar()
     research_section:SetRolloverTitle(T{T{357380421238, "Research"}, UICity})
     research_section:SetRolloverText(T{
         ResourceOverviewObj:GetResearchRollover(),
-        UICity,
     })
 
     local grid_resources = XWindow:new({
@@ -76,7 +75,7 @@ function AddInfoBar()
         VAlign = "center",
         HandleMouse = true,
         RolloverTemplate = "Rollover",
-        Padding = box(10, 0, 5, 0),
+        Padding = box(15, 0, 5, 0),
     }, bar)
 
     AddResourceDisplay(grid_resources, "Power", "UI/Icons/res_electricity.tga")
@@ -86,7 +85,6 @@ function AddInfoBar()
     grid_resources:SetRolloverTitle(T{T{3618, "Grid Resources"}, UICity})
     grid_resources:SetRolloverText(T{
         ResourceOverviewObj:GetGridRollover(),
-        UICity,
     })
 
     local basic_resources = XWindow:new({
@@ -106,7 +104,6 @@ function AddInfoBar()
     basic_resources:SetRolloverTitle(T{T{494, "Basic Resources"}, UICity})
     basic_resources:SetRolloverText(T{
         ResourceOverviewObj:GetBasicResourcesRollover(),
-        UICity,
     })
 
     local advanced_resources = XWindow:new({
@@ -115,7 +112,7 @@ function AddInfoBar()
         VAlign = "center",
         HandleMouse = true,
         RolloverTemplate = "Rollover",
-        Padding = box(5, 0, 0, 0),
+        Padding = box(5, 0, 15, 0),
     }, bar)
 
     AddResourceDisplay(advanced_resources, "Polymers", "UI/Icons/res_polymers.tga")
@@ -126,9 +123,91 @@ function AddInfoBar()
     advanced_resources:SetRolloverTitle(T{T{500, "Advanced Resources"}, UICity})
     advanced_resources:SetRolloverText(T{
         ResourceOverviewObj:GetAdvancedResourcesRollover(),
-        UICity,
+    })
+
+    local colonist_section = XWindow:new({
+        Id = "idColonistBar",
+        LayoutMethod = "HList",
+        VAlign = "center",
+        HandleMouse = true,
+        RolloverTemplate = "Rollover",
+        Padding = box(15, 0, 0, 0),
+    }, bar)
+
+    AddResourceDisplay(colonist_section, "AvailableHomes", this_mod_dir.."UI/res_home.tga")
+    AddResourceDisplay(colonist_section, "Homeless", this_mod_dir.."UI/res_homeless.tga")
+    AddResourceDisplay(colonist_section, "Jobs", this_mod_dir.."UI/res_work.tga")
+    AddResourceDisplay(colonist_section, "Unemployed", this_mod_dir.."UI/res_unemployed.tga")
+
+    colonist_section:SetRolloverTitle(T{T{547, "Colonists"}, UICity})
+    colonist_section:SetRolloverText(T{"<citizens_rollover>",
+        citizens_rollover = GetInfoBarCitizensRollover,
     })
 end
+
+-- Largely copied from Dome:GetUISectionCitizensRollover(), with the dome-specific sections removed
+function GetInfoBarCitizensRollover()
+    if not UICity then
+        return
+    end
+  local ui_on_vacant, ui_off_vacant = GetFreeWorkplaces(UICity)
+  local renegades = rawget(ResourceOverviewObj.data, "renegades")
+  if not renegades then
+    renegades = 0
+    for _, dome in ipairs(UICity.labels.Dome) do
+      renegades = renegades + (dome.labels.Renegade and #dome.labels.Renegade or 0)
+    end
+  end
+  local free = GetFreeLivingSpace(UICity)
+  local texts = {
+    T({
+      7622,
+      "<center><em>Jobs</em>"
+    }),
+    T({
+      548,
+      "Unemployed and looking for work<right><colonist(number)>",
+      number = UICity.labels.Unemployed and #UICity.labels.Unemployed or 0,
+      empty_table
+    }),
+    T({
+      549,
+      "Vacant work slots<right><colonist(number)>",
+      number = ui_on_vacant
+    }),
+    T({
+      550,
+      "Disabled work slots<right><colonist(number)>",
+      number = ui_off_vacant
+    }),
+    T({
+      7346,
+      "Renegades<right><colonist(number)>",
+      number = renegades
+    }),
+    T({
+      7623,
+      "<newline><center><em>Living space</em>"
+    }),
+    T({
+      552,
+      "Vacant residential slots<right><colonist(number)>",
+      number = free
+    }),
+    T({
+      7624,
+      "Vacant nursery slots<right><colonist(number)>",
+      number = GetFreeLivingSpace(UICity, true) - free
+    }),
+    T({
+      551,
+      "Homeless<right><colonist(number)>",
+      number = UICity.labels.Homeless and #UICity.labels.Homeless or 0
+    }),
+  }
+  return table.concat(texts, "<newline><left>")
+end
+
 
 -- It seems crazy to have to implement this here, but I can't for the life of me figure out how the
 -- game does its thousands formatting. As a consequence, this means that the separator is hardcoded
@@ -189,10 +268,19 @@ function UpdateInfoBar()
     UpdateStandardResourceDisplay(interface, "Fuel")
 
     interface["idResourceBarResearchDisplay"]:SetText(
-                                FormatIntWithSeparator(ResourceOverviewObj:GetEstimatedRP()))
+                    FormatIntWithSeparator(ResourceOverviewObj:GetEstimatedRP()))
 
     interface["idResourceBarFundingDisplay"]:SetText(
-                                string.format("$%d M", ResourceOverviewObj:GetFunding() / 1000000))
+                    "$"..FormatIntWithSeparator(ResourceOverviewObj:GetFunding() / 1000000).." M")
+
+    local vacancies = FormatIntWithSeparator(GetFreeLivingSpace(UICity))
+    local homeless = FormatIntWithSeparator(#(UICity.labels.Homeless or empty_table))
+    local jobs = FormatIntWithSeparator(GetFreeWorkplaces(UICity))
+    local unemployed = FormatIntWithSeparator(#(UICity.labels.Unemployed or empty_table))
+    interface["idResourceBarAvailableHomesDisplay"]:SetText(vacancies)
+    interface["idResourceBarHomelessDisplay"]:SetText(homeless)
+    interface["idResourceBarJobsDisplay"]:SetText(jobs)
+    interface["idResourceBarUnemployedDisplay"]:SetText(unemployed)
 
     -- When you mouse over an element, its tooltip ('rollover') is updated
     -- automatically, but to have it update while it's open, it needs to be
@@ -201,6 +289,7 @@ function UpdateInfoBar()
     XUpdateRolloverWindow(interface["idBasicResourceBar"])
     XUpdateRolloverWindow(interface["idAdvancedResourceBar"])
     XUpdateRolloverWindow(interface["idResearchBar"])
+    XUpdateRolloverWindow(interface["idColonistBar"])
 end
 
 function OnMsg.NewMinute()
