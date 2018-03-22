@@ -215,6 +215,7 @@ end
 -- Taken from http://lua-users.org/wiki/FormattingNumbers
 function FormatIntWithSeparator(int)
     local formatted = int
+    local k
     while true do
         formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
         if (k==0) then
@@ -248,7 +249,7 @@ function UpdateStandardResourceDisplay(interface, resource)
 end
 
 function UpdateInfoBar()
-    if not UICity then
+    if not UICity or not ResourceOverviewObj then
         return
     end
 
@@ -297,7 +298,16 @@ function OnMsg.NewMinute()
 end
 
 function OnMsg.UIReady()
-    AddInfoBar()
+    CreateGameTimeThread(function()
+        while true do
+            WaitMsg("OnRender")
+            if ResourceOverviewObj and UICity then
+                AddInfoBar()
+                UpdateInfoBar()
+                break
+            end
+        end
+    end)
 end
 
 function OnMsg.LoadGame()
