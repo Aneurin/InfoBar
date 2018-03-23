@@ -16,9 +16,9 @@ end
 function AddInfoBar()
     local interface = GetXDialog("InGameInterface")
     if interface['idInfoBar'] then
-        -- The resource bar is already there, so this must have been called more
-        -- than once
-        return
+        -- The resource bar is already there, so this must have been called more than once. This
+        -- might be a request to rebuild it, so remove the existing one and start again
+        interface['idInfoBar']:Done()
     end
     local this_mod_dir = debug.getinfo(2, "S").source:sub(2, -16)
     local bar = XWindow:new({
