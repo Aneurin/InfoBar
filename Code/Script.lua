@@ -1,4 +1,9 @@
-function AddResourceDisplay(parent, resource, icon)
+InfoBar = {}
+-- Randomly generated number to start counting from, to generate IDs for translatable strings
+InfoBar.StringIdBase = 76827346
+
+function InfoBar:AddResourceDisplay(parent, resource, icon)
+    local min_width = self.full_width and 50 or 30
     XImage:new({
         Id = "idResourceBar"..resource.."Icon",
         Image = icon,
@@ -6,33 +11,44 @@ function AddResourceDisplay(parent, resource, icon)
     }, parent)
     XText:new({
         Id = "idResourceBar"..resource.."Display",
-        MinWidth = 25,
+        MinWidth = min_width,
+        TextFont = "HexChoice",
         TextColor = RGB(255, 255, 255),
         RolloverTextColor = RGB(255, 255, 255),
     }, parent)
-
 end
 
-function AddInfoBar()
+function InfoBar:AddInfoBar()
     local interface = GetXDialog("InGameInterface")
     if not (interface and ResourceOverviewObj and UICity) then return end
     if interface['idInfoBar'] then
         -- The resource bar is already there, so this must have been called more than once. This
         -- might be a request to rebuild it, so remove the existing one and start again
-        interface['idInfoBar']:Done()
+        interface['idInfoBar']:delete()
     end
     local this_mod_dir = debug.getinfo(2, "S").source:sub(2, -16)
-    local bar = XWindow:new({
+    self.bar = XWindow:new({
         Id = "idInfoBar",
-        HAlign = "center",
         VAlign = "top",
-        LayoutMethod = "HList",
         Margins = box(0, -1, 0, 0),
         Padding = box(8, 0, 8, 0),
         Background = RGBA(0, 20, 40, 200),
         BorderWidth = 1,
     }, interface)
+    if self.full_width then
+        self.bar:SetLayoutMethod("Box")
+        self.bar:SetHAlign("stretch")
+    else
+        self.bar:SetLayoutMethod("HList")
+        self.bar:SetLayoutHSpacing(35)
+        self.bar:SetHAlign("center")
+    end
 
+    local left = XWindow:new({
+        HAlign = "left",
+        LayoutMethod = "HList",
+        LayoutHSpacing = 10,
+    }, self.bar)
     local funding_section = XWindow:new({
         Id = "idFundingBar",
         LayoutMethod = "HList",
@@ -40,8 +56,7 @@ function AddInfoBar()
         HandleMouse = true,
         RolloverTemplate = "Rollover",
         RolloverAnchor = "bottom",
-        Padding = box(0, 0, 5, 0),
-    }, bar)
+    }, left)
 
     XText:new({
         Id = "idResourceBarFundingDisplay",
@@ -62,15 +77,24 @@ function AddInfoBar()
         HandleMouse = true,
         RolloverTemplate = "Rollover",
         RolloverAnchor = "bottom",
-        Padding = box(5, 0, 15, 0),
-    }, bar)
+    }, left)
 
-    AddResourceDisplay(research_section, "Research", "UI/Icons/res_experimental_research.tga")
+    self:AddResourceDisplay(research_section, "Research", "UI/Icons/res_experimental_research.tga")
 
     research_section:SetRolloverTitle(T{T{357380421238, "Research"}, UICity})
     research_section:SetRolloverText(T{
         ResourceOverviewObj:GetResearchRollover(),
     })
+
+    local centre = XWindow:new({
+        HAlign = "center",
+        LayoutMethod = "HList",
+        LayoutHSpacing = 20,
+    }, self.bar)
+
+    if self.full_width then
+        centre:SetLayoutHSpacing(60)
+    end
 
     local grid_resources = XWindow:new({
         Id = "idGridResourceBar",
@@ -79,12 +103,11 @@ function AddInfoBar()
         HandleMouse = true,
         RolloverTemplate = "Rollover",
         RolloverAnchor = "bottom",
-        Padding = box(15, 0, 5, 0),
-    }, bar)
+    }, centre)
 
-    AddResourceDisplay(grid_resources, "Power", "UI/Icons/res_electricity.tga")
-    AddResourceDisplay(grid_resources, "Air", "UI/Icons/res_oxygen.tga")
-    AddResourceDisplay(grid_resources, "Water", "UI/Icons/res_water.tga")
+    self:AddResourceDisplay(grid_resources, "Power", "UI/Icons/res_electricity.tga")
+    self:AddResourceDisplay(grid_resources, "Air", "UI/Icons/res_oxygen.tga")
+    self:AddResourceDisplay(grid_resources, "Water", "UI/Icons/res_water.tga")
 
     grid_resources:SetRolloverTitle(T{T{3618, "Grid Resources"}, UICity})
     grid_resources:SetRolloverText(T{
@@ -98,13 +121,12 @@ function AddInfoBar()
         HandleMouse = true,
         RolloverTemplate = "Rollover",
         RolloverAnchor = "bottom",
-        Padding = box(5, 0, 5, 0),
-    }, bar)
+    }, centre)
 
-    AddResourceDisplay(basic_resources, "Metals", "UI/Icons/res_metal.tga")
-    AddResourceDisplay(basic_resources, "Concrete", "UI/Icons/res_concrete.tga")
-    AddResourceDisplay(basic_resources, "Food", "UI/Icons/res_food.tga")
-    AddResourceDisplay(basic_resources, "PreciousMetals", "UI/Icons/res_precious_metals.tga")
+    self:AddResourceDisplay(basic_resources, "Metals", "UI/Icons/res_metal.tga")
+    self:AddResourceDisplay(basic_resources, "Concrete", "UI/Icons/res_concrete.tga")
+    self:AddResourceDisplay(basic_resources, "Food", "UI/Icons/res_food.tga")
+    self:AddResourceDisplay(basic_resources, "PreciousMetals", "UI/Icons/res_precious_metals.tga")
 
     basic_resources:SetRolloverTitle(T{T{494, "Basic Resources"}, UICity})
     basic_resources:SetRolloverText(T{
@@ -118,18 +140,23 @@ function AddInfoBar()
         HandleMouse = true,
         RolloverTemplate = "Rollover",
         RolloverAnchor = "bottom",
-        Padding = box(5, 0, 15, 0),
-    }, bar)
+    }, centre)
 
-    AddResourceDisplay(advanced_resources, "Polymers", "UI/Icons/res_polymers.tga")
-    AddResourceDisplay(advanced_resources, "Electronics", "UI/Icons/res_electronics.tga")
-    AddResourceDisplay(advanced_resources, "MachineParts", "UI/Icons/res_machine_parts.tga")
-    AddResourceDisplay(advanced_resources, "Fuel", "UI/Icons/res_fuel.tga")
+    self:AddResourceDisplay(advanced_resources, "Polymers", "UI/Icons/res_polymers.tga")
+    self:AddResourceDisplay(advanced_resources, "Electronics", "UI/Icons/res_electronics.tga")
+    self:AddResourceDisplay(advanced_resources, "MachineParts", "UI/Icons/res_machine_parts.tga")
+    self:AddResourceDisplay(advanced_resources, "Fuel", "UI/Icons/res_fuel.tga")
 
     advanced_resources:SetRolloverTitle(T{T{500, "Advanced Resources"}, UICity})
     advanced_resources:SetRolloverText(T{
         ResourceOverviewObj:GetAdvancedResourcesRollover(),
     })
+
+    local right = XWindow:new({
+        HAlign = "right",
+        LayoutMethod = "HList",
+        LayoutHSpacing = 10,
+    }, self.bar)
 
     local colonist_section = XWindow:new({
         Id = "idColonistBar",
@@ -138,13 +165,12 @@ function AddInfoBar()
         HandleMouse = true,
         RolloverTemplate = "Rollover",
         RolloverAnchor = "bottom",
-        Padding = box(15, 0, 0, 0),
-    }, bar)
+    }, right)
 
-    AddResourceDisplay(colonist_section, "AvailableHomes", this_mod_dir.."UI/res_home.tga")
-    AddResourceDisplay(colonist_section, "Homeless", this_mod_dir.."UI/res_homeless.tga")
-    AddResourceDisplay(colonist_section, "Jobs", this_mod_dir.."UI/res_work.tga")
-    AddResourceDisplay(colonist_section, "Unemployed", this_mod_dir.."UI/res_unemployed.tga")
+    self:AddResourceDisplay(colonist_section, "AvailableHomes", this_mod_dir.."UI/res_home.tga")
+    self:AddResourceDisplay(colonist_section, "Homeless", this_mod_dir.."UI/res_homeless.tga")
+    self:AddResourceDisplay(colonist_section, "Jobs", this_mod_dir.."UI/res_work.tga")
+    self:AddResourceDisplay(colonist_section, "Unemployed", this_mod_dir.."UI/res_unemployed.tga")
 
     colonist_section:SetRolloverTitle(T{T{547, "Colonists"}, UICity})
     colonist_section:SetRolloverText(T{"<citizens_rollover>",
@@ -289,12 +315,47 @@ function OnMsg.UIReady()
         while true do
             WaitMsg("OnRender")
             if ResourceOverviewObj and UICity then
-                AddInfoBar()
+                InfoBar.full_width = false
+                if ModConfig then
+                    InfoBar.full_width = ModConfig:Get("InfoBar", "FullWidth")
+                end
+                InfoBar:AddInfoBar()
                 UpdateInfoBar()
                 break
             end
         end
     end)
+end
+
+function OnMsg.ModConfigReady()
+    ModConfig:RegisterMod("InfoBar", T{InfoBar.StringIdBase, "Info Bar"})
+    ModConfig:RegisterOption("InfoBar", "FullWidth", {
+        name = T{
+            InfoBar.StringIdBase + 1, "Full Width Bar"
+        },
+        desc = T{
+            InfoBar.StringIdBase + 2,
+            "If everything feels too cramped, make the Info Bar take the full width of the screen"
+            .." with more spacing between elements"
+        },
+        type = "boolean",
+        default = false
+    })
+    -- Since this mod doesn't require ModConfig, it can't wait about for it and therefore might have
+    -- already created the bar with the default settings, so we need to check
+    self.full_width = ModConfig:Get("InfoBar", "FullWidth")
+    if self.full_width then
+        InfoBar:AddInfoBar()
+        UpdateInfoBar()
+    end
+end
+
+function OnMsg.ModConfigChanged(mod_id, option_id, value)
+    if mod_id == "InfoBar" and option_id == "FullWidth" then
+        InfoBar.full_width = value
+        InfoBar:AddInfoBar()
+        UpdateInfoBar()
+    end
 end
 
 -- The following three functions are intended to simplify the job of knowing when it's safe to start
