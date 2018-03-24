@@ -214,22 +214,6 @@ function GetInfoBarCitizensRollover()
 end
 
 
--- It seems crazy to have to implement this here, but I can't for the life of me figure out how the
--- game does its thousands formatting. As a consequence, this means that the separator is hardcoded
--- to be a comma :-(
--- Taken from http://lua-users.org/wiki/FormattingNumbers
-function FormatIntWithSeparator(int)
-    local formatted = int
-    local k
-    while true do
-        formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
-        if (k==0) then
-            break
-        end
-    end
-    return formatted
-end
-
 function UpdateGridResourceDisplay(interface, resource)
     if not ResourceOverviewObj then
         -- It's probably just not ready yet
@@ -238,7 +222,7 @@ function UpdateGridResourceDisplay(interface, resource)
     local produced = ResourceOverview['GetTotalProduced'..resource](ResourceOverviewObj)
     local required = ResourceOverview['GetTotalRequired'..resource](ResourceOverviewObj)
     local net = (produced - required) / 1000
-    interface["idResourceBar"..resource.."Display"]:SetText(FormatIntWithSeparator(net))
+    interface["idResourceBar"..resource.."Display"]:SetText(LocaleInt(net))
     if net >= 0 then
         interface["idResourceBar"..resource.."Display"]:SetTextColor(RGB(0, 255, 0))
         interface["idResourceBar"..resource.."Display"]:SetRolloverTextColor(RGB(0, 255, 0))
@@ -250,7 +234,7 @@ end
 
 function UpdateStandardResourceDisplay(interface, resource)
     local available = ResourceOverviewObj:GetAvailable(resource) / 1000
-    interface["idResourceBar"..resource.."Display"]:SetText(FormatIntWithSeparator(available))
+    interface["idResourceBar"..resource.."Display"]:SetText(LocaleInt(available))
 end
 
 function UpdateInfoBar()
@@ -272,15 +256,15 @@ function UpdateInfoBar()
     UpdateStandardResourceDisplay(interface, "Fuel")
 
     interface["idResourceBarResearchDisplay"]:SetText(
-                    FormatIntWithSeparator(ResourceOverviewObj:GetEstimatedRP()))
+                    LocaleInt(ResourceOverviewObj:GetEstimatedRP()))
 
     interface["idResourceBarFundingDisplay"]:SetText(
-                    "$"..FormatIntWithSeparator(ResourceOverviewObj:GetFunding() / 1000000).." M")
+                    "$"..LocaleInt(ResourceOverviewObj:GetFunding() / 1000000).." M")
 
-    local vacancies = FormatIntWithSeparator(GetFreeLivingSpace(UICity))
-    local homeless = FormatIntWithSeparator(#(UICity.labels.Homeless or empty_table))
-    local jobs = FormatIntWithSeparator(GetFreeWorkplaces(UICity))
-    local unemployed = FormatIntWithSeparator(#(UICity.labels.Unemployed or empty_table))
+    local vacancies = LocaleInt(GetFreeLivingSpace(UICity))
+    local homeless = LocaleInt(#(UICity.labels.Homeless or empty_table))
+    local jobs = LocaleInt(GetFreeWorkplaces(UICity))
+    local unemployed = LocaleInt(#(UICity.labels.Unemployed or empty_table))
     interface["idResourceBarAvailableHomesDisplay"]:SetText(vacancies)
     interface["idResourceBarHomelessDisplay"]:SetText(homeless)
     interface["idResourceBarJobsDisplay"]:SetText(jobs)
