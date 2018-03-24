@@ -39,6 +39,7 @@ function AddInfoBar()
         VAlign = "center",
         HandleMouse = true,
         RolloverTemplate = "Rollover",
+        RolloverAnchor = "bottom",
         Padding = box(0, 0, 5, 0),
     }, bar)
 
@@ -60,6 +61,7 @@ function AddInfoBar()
         VAlign = "center",
         HandleMouse = true,
         RolloverTemplate = "Rollover",
+        RolloverAnchor = "bottom",
         Padding = box(5, 0, 15, 0),
     }, bar)
 
@@ -76,6 +78,7 @@ function AddInfoBar()
         VAlign = "center",
         HandleMouse = true,
         RolloverTemplate = "Rollover",
+        RolloverAnchor = "bottom",
         Padding = box(15, 0, 5, 0),
     }, bar)
 
@@ -94,6 +97,7 @@ function AddInfoBar()
         VAlign = "center",
         HandleMouse = true,
         RolloverTemplate = "Rollover",
+        RolloverAnchor = "bottom",
         Padding = box(5, 0, 5, 0),
     }, bar)
 
@@ -113,6 +117,7 @@ function AddInfoBar()
         VAlign = "center",
         HandleMouse = true,
         RolloverTemplate = "Rollover",
+        RolloverAnchor = "bottom",
         Padding = box(5, 0, 15, 0),
     }, bar)
 
@@ -132,6 +137,7 @@ function AddInfoBar()
         VAlign = "center",
         HandleMouse = true,
         RolloverTemplate = "Rollover",
+        RolloverAnchor = "bottom",
         Padding = box(15, 0, 0, 0),
     }, bar)
 
