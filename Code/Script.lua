@@ -15,6 +15,7 @@ end
 
 function AddInfoBar()
     local interface = GetXDialog("InGameInterface")
+    if not (interface and ResourceOverviewObj and UICity) then return end
     if interface['idInfoBar'] then
         -- The resource bar is already there, so this must have been called more than once. This
         -- might be a request to rebuild it, so remove the existing one and start again
@@ -147,9 +148,7 @@ end
 
 -- Largely copied from Dome:GetUISectionCitizensRollover(), with the dome-specific sections removed
 function GetInfoBarCitizensRollover()
-    if not UICity then
-        return
-    end
+    if not (ResourceOverviewObj and UICity) then return end
   local ui_on_vacant, ui_off_vacant = GetFreeWorkplaces(UICity)
   local renegades = rawget(ResourceOverviewObj.data, "renegades")
   if not renegades then
@@ -249,9 +248,7 @@ function UpdateStandardResourceDisplay(interface, resource)
 end
 
 function UpdateInfoBar()
-    if not UICity or not ResourceOverviewObj then
-        return
-    end
+    if not (ResourceOverviewObj and UICity) then return end
 
     local interface = GetXDialog("InGameInterface")
     UpdateGridResourceDisplay(interface, "Power")
