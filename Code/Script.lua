@@ -247,6 +247,10 @@ function UpdateGridResourceDisplay(interface, resource)
     end
     local produced = ResourceOverview['GetTotalProduced'..resource](ResourceOverviewObj)
     local required = ResourceOverview['GetTotalRequired'..resource](ResourceOverviewObj)
+    if produced == nil or required == nil then
+        -- ResourceOverviewObj is here, but it doesn't seem to be usable yet
+        return
+    end
     local net = (produced - required) / 1000
     interface["idResourceBar"..resource.."Display"]:SetText(LocaleInt(net))
     if net >= 0 then
@@ -306,6 +310,10 @@ function UpdateInfoBar()
     XUpdateRolloverWindow(interface["idColonistBar"])
 end
 
+function InfoBar.SetScrollSensitivity(sensitivity)
+    cameraRTS.SetProperties(1, {ScrollBorder = sensitivity})
+end
+
 function OnMsg.NewMinute()
     UpdateInfoBar()
 end
@@ -318,6 +326,7 @@ function OnMsg.UIReady()
                 InfoBar.full_width = false
                 if ModConfig then
                     InfoBar.full_width = ModConfig:Get("InfoBar", "FullWidth")
+                    InfoBar.SetScrollSensitivity(ModConfig:Get("InfoBar", "ScrollSensitivity"))
                 end
                 InfoBar:AddInfoBar()
                 UpdateInfoBar()
@@ -341,20 +350,43 @@ function OnMsg.ModConfigReady()
         type = "boolean",
         default = false
     })
+    local screen_scroll_default = const.DefaultCameraRTS.ScrollBorder
+    ModConfig:RegisterOption("InfoBar", "ScrollSensitivity", {
+        name = T{
+            InfoBar.StringIdBase + 3, "Screen Scroll Sensitivity"
+        },
+        desc = T{
+            InfoBar.StringIdBase + 4,
+            "Controls how sensitive the game is to scrolling the map when you move your cursor to"
+            .." the edge of the screen"
+        },
+        type = "enum",
+        values= {
+            {value = screen_scroll_default, label = T{1000121, "Default"}},
+            {value = 1, label = T{InfoBar.StringIdBase + 5, "Minimum"}},
+            {value = 0, label = T{InfoBar.StringIdBase + 6, "Disabled"}}
+        },
+        default = screen_scroll_default
+    })
     -- Since this mod doesn't require ModConfig, it can't wait about for it and therefore might have
     -- already created the bar with the default settings, so we need to check
-    self.full_width = ModConfig:Get("InfoBar", "FullWidth")
-    if self.full_width then
+    InfoBar.full_width = ModConfig:Get("InfoBar", "FullWidth")
+    if InfoBar.full_width then
         InfoBar:AddInfoBar()
         UpdateInfoBar()
     end
+    InfoBar.SetScrollSensitivity(ModConfig:Get("InfoBar", "ScrollSensitivity"))
 end
 
 function OnMsg.ModConfigChanged(mod_id, option_id, value)
-    if mod_id == "InfoBar" and option_id == "FullWidth" then
-        InfoBar.full_width = value
-        InfoBar:AddInfoBar()
-        UpdateInfoBar()
+    if mod_id == "InfoBar"  then
+        if option_id == "FullWidth" then
+            InfoBar.full_width = value
+            InfoBar:AddInfoBar()
+            UpdateInfoBar()
+        elseif option_id == "ScrollSensitivity" then
+            InfoBar.SetScrollSensitivity(value)
+        end
     end
 end
 
