@@ -312,6 +312,7 @@ end
 
 function InfoBar.SetScrollSensitivity(sensitivity)
     cameraRTS.SetProperties(1, {ScrollBorder = sensitivity})
+    const.DefaultCameraRTS.ScrollBorder = sensitivity
 end
 
 function OnMsg.NewMinute()
@@ -326,7 +327,6 @@ function OnMsg.UIReady()
                 InfoBar.full_width = false
                 if ModConfig then
                     InfoBar.full_width = ModConfig:Get("InfoBar", "FullWidth")
-                    InfoBar.SetScrollSensitivity(ModConfig:Get("InfoBar", "ScrollSensitivity"))
                 end
                 InfoBar:AddInfoBar()
                 UpdateInfoBar()
