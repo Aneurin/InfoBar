@@ -26,6 +26,7 @@ function InfoBar:AddInfoBar()
         -- might be a request to rebuild it, so remove the existing one and start again
         interface['idInfoBar']:delete()
     end
+    self:DeleteClockThread()
     local this_mod_dir = debug.getinfo(2, "S").source:sub(2, -16)
     self.bar = XWindow:new({
         Id = "idInfoBar",
@@ -176,6 +177,23 @@ function InfoBar:AddInfoBar()
     colonist_section:SetRolloverText(T{"<citizens_rollover>",
         citizens_rollover = GetInfoBarCitizensRollover,
     })
+
+    if self.show_clock then
+        local min_width = (self.show_clock == "seconds") and 75 or 50
+        self.clock = XText:new({
+            MinWidth = min_width,
+            TextFont = "HexChoice",
+            TextHAlign = "center",
+            HAlign = "right",
+            TextColor = RGB(255, 255, 255),
+            RolloverTextColor = RGB(255, 255, 255),
+        }, self.bar)
+        if self.full_width then
+            self.clock:SetDock("right")
+            self.clock:SetMargins(box(20, 0, 0, 0))
+        end
+        self:StartClockThread()
+    end
 end
 
 -- Largely copied from Dome:GetUISectionCitizensRollover(), with the dome-specific sections removed
@@ -271,6 +289,8 @@ function UpdateInfoBar()
     if not (ResourceOverviewObj and UICity) then return end
 
     local interface = GetXDialog("InGameInterface")
+    if not interface then return end
+
     UpdateGridResourceDisplay(interface, "Power")
     UpdateGridResourceDisplay(interface, "Air")
     UpdateGridResourceDisplay(interface, "Water")
@@ -315,6 +335,37 @@ function InfoBar.SetScrollSensitivity(sensitivity)
     const.DefaultCameraRTS.ScrollBorder = sensitivity
 end
 
+function InfoBar:StartClockThread()
+    self:DeleteClockThread()
+    if not self.show_clock then return end
+    local format, tick_time
+    if self.show_clock == "seconds" then
+        format = "%H:%M:%S"
+        -- we need to tick a lot more than once per second to avoid having visibly varying second
+        -- times depending on whether we tick just before the second or just after
+        tick_time = 100
+    else
+        format = "%H:%M"
+        tick_time = 1000
+    end
+    self.clock_thread = CreateRealTimeThread(function()
+        while true do
+            if self.clock then
+                self.clock:SetText(os.date(format, os.time()))
+                Sleep(tick_time)
+            else
+                Halt()
+            end
+        end
+    end)
+end
+
+function InfoBar:DeleteClockThread()
+    if self.clock_thread and IsValidThread(self.clock_thread) then
+        DeleteThread(self.clock_thread)
+    end
+end
+
 function OnMsg.NewMinute()
     UpdateInfoBar()
 end
@@ -327,6 +378,7 @@ function OnMsg.UIReady()
                 InfoBar.full_width = false
                 if ModConfig then
                     InfoBar.full_width = ModConfig:Get("InfoBar", "FullWidth")
+                    InfoBar.show_clock = ModConfig:Get("InfoBar", "Clock")
                 end
                 InfoBar:AddInfoBar()
                 UpdateInfoBar()
@@ -345,7 +397,7 @@ function OnMsg.ModConfigReady()
         desc = T{
             InfoBar.StringIdBase + 2,
             "If everything feels too cramped, make the Info Bar take the full width of the screen"
-            .." with more spacing between elements"
+            .." with more spacing between elements."
         },
         type = "boolean",
         default = false
@@ -358,7 +410,7 @@ function OnMsg.ModConfigReady()
         desc = T{
             InfoBar.StringIdBase + 4,
             "Controls how sensitive the game is to scrolling the map when you move your cursor to"
-            .." the edge of the screen"
+            .." the edge of the screen."
         },
         type = "enum",
         values= {
@@ -368,10 +420,26 @@ function OnMsg.ModConfigReady()
         },
         default = screen_scroll_default
     })
+    ModConfig:RegisterOption("InfoBar", "Clock", {
+        name = T{
+            InfoBar.StringIdBase + 7, "Show a Clock"
+        },
+        desc = T{
+            InfoBar.StringIdBase + 8, "Add a real time clock to the right of the bar."
+        },
+        type = "enum",
+        values= {
+            {value = false, label = T{InfoBar.StringIdBase + 6, "Disabled"}},
+            {value = "minutes", label = T{InfoBar.StringIdBase + 9, "Minutes"}},
+            {value = "seconds", label = T{InfoBar.StringIdBase + 10, "Seconds"}}
+        },
+        default = false
+    })
     -- Since this mod doesn't require ModConfig, it can't wait about for it and therefore might have
     -- already created the bar with the default settings, so we need to check
     InfoBar.full_width = ModConfig:Get("InfoBar", "FullWidth")
-    if InfoBar.full_width then
+    InfoBar.show_clock = ModConfig:Get("InfoBar", "Clock")
+    if InfoBar.full_width or InfoBar.clock then
         InfoBar:AddInfoBar()
         UpdateInfoBar()
     end
@@ -382,11 +450,14 @@ function OnMsg.ModConfigChanged(mod_id, option_id, value)
     if mod_id == "InfoBar"  then
         if option_id == "FullWidth" then
             InfoBar.full_width = value
-            InfoBar:AddInfoBar()
-            UpdateInfoBar()
         elseif option_id == "ScrollSensitivity" then
             InfoBar.SetScrollSensitivity(value)
+            return
+        elseif option_id == "Clock" then
+            InfoBar.show_clock = value
         end
+        InfoBar:AddInfoBar()
+        UpdateInfoBar()
     end
 end
 
