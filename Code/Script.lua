@@ -261,7 +261,20 @@ function GetInfoBarCitizensRollover()
 end
 
 
-function UpdateGridResourceDisplay(interface, resource)
+function InfoBar.AbbrevInt(int)
+    if int > 10000 then
+        return string.format("%dk", floatfloor(int/1000))
+    elseif int > 1000 and (int % 1000) > 100 then
+        return string.format("%d%s%dk", floatfloor(int/1000), InfoBar.decimal,
+            floatfloor((int % 1000) / 100))
+    elseif int > 1000 then
+        return string.format("%.0fk", int/1000)
+    else
+        return string.format("%d", int)
+    end
+end
+
+function InfoBar:UpdateGridResourceDisplay(interface, resource)
     if not ResourceOverviewObj then
         -- It's probably just not ready yet
         return
@@ -273,7 +286,7 @@ function UpdateGridResourceDisplay(interface, resource)
         return
     end
     local net = (produced - required) / 1000
-    interface["idResourceBar"..resource.."Display"]:SetText(LocaleInt(net))
+    interface["idResourceBar"..resource.."Display"]:SetText(self.FormatInt(net))
     if net >= 0 then
         interface["idResourceBar"..resource.."Display"]:SetTextColor(RGB(0, 255, 0))
         interface["idResourceBar"..resource.."Display"]:SetRolloverTextColor(RGB(0, 255, 0))
@@ -283,45 +296,45 @@ function UpdateGridResourceDisplay(interface, resource)
     end
 end
 
-function UpdateStandardResourceDisplay(interface, resource)
+function InfoBar:UpdateStandardResourceDisplay(interface, resource)
     if not ResourceOverviewObj.data[resource] then
         -- the object is here, but it doesn't seem to be initialised yet
         return
     end
     local available = ResourceOverviewObj:GetAvailable(resource) / 1000
-    interface["idResourceBar"..resource.."Display"]:SetText(LocaleInt(available))
+    interface["idResourceBar"..resource.."Display"]:SetText(self.FormatInt(available))
 end
 
-function UpdateInfoBar()
+function InfoBar:Update()
     if not (ResourceOverviewObj and UICity) then return end
 
     local interface = GetXDialog("InGameInterface")
     if not interface then return end
 
-    UpdateGridResourceDisplay(interface, "Power")
-    UpdateGridResourceDisplay(interface, "Air")
-    UpdateGridResourceDisplay(interface, "Water")
+    self:UpdateGridResourceDisplay(interface, "Power")
+    self:UpdateGridResourceDisplay(interface, "Air")
+    self:UpdateGridResourceDisplay(interface, "Water")
 
-    UpdateStandardResourceDisplay(interface, "Metals")
-    UpdateStandardResourceDisplay(interface, "Concrete")
-    UpdateStandardResourceDisplay(interface, "Food")
-    UpdateStandardResourceDisplay(interface, "PreciousMetals")
+    self:UpdateStandardResourceDisplay(interface, "Metals")
+    self:UpdateStandardResourceDisplay(interface, "Concrete")
+    self:UpdateStandardResourceDisplay(interface, "Food")
+    self:UpdateStandardResourceDisplay(interface, "PreciousMetals")
 
-    UpdateStandardResourceDisplay(interface, "Polymers")
-    UpdateStandardResourceDisplay(interface, "Electronics")
-    UpdateStandardResourceDisplay(interface, "MachineParts")
-    UpdateStandardResourceDisplay(interface, "Fuel")
+    self:UpdateStandardResourceDisplay(interface, "Polymers")
+    self:UpdateStandardResourceDisplay(interface, "Electronics")
+    self:UpdateStandardResourceDisplay(interface, "MachineParts")
+    self:UpdateStandardResourceDisplay(interface, "Fuel")
 
     interface["idResourceBarResearchDisplay"]:SetText(
-                    LocaleInt(ResourceOverviewObj:GetEstimatedRP()))
+                    self.FormatInt(ResourceOverviewObj:GetEstimatedRP()))
 
     interface["idResourceBarFundingDisplay"]:SetText(
                     "$"..LocaleInt(ResourceOverviewObj:GetFunding() / 1000000).." M")
 
-    local vacancies = LocaleInt(GetFreeLivingSpace(UICity))
-    local homeless = LocaleInt(#(UICity.labels.Homeless or empty_table))
-    local jobs = LocaleInt(GetFreeWorkplaces(UICity))
-    local unemployed = LocaleInt(#(UICity.labels.Unemployed or empty_table))
+    local vacancies = self.FormatInt(GetFreeLivingSpace(UICity))
+    local homeless = self.FormatInt(#(UICity.labels.Homeless or empty_table))
+    local jobs = self.FormatInt(GetFreeWorkplaces(UICity))
+    local unemployed = self.FormatInt(#(UICity.labels.Unemployed or empty_table))
     interface["idResourceBarAvailableHomesDisplay"]:SetText(vacancies)
     interface["idResourceBarHomelessDisplay"]:SetText(homeless)
     interface["idResourceBarJobsDisplay"]:SetText(jobs)
@@ -374,7 +387,7 @@ function InfoBar:DeleteClockThread()
 end
 
 function OnMsg.NewMinute()
-    UpdateInfoBar()
+    InfoBar:Update()
 end
 
 function OnMsg.UIReady()
@@ -382,13 +395,17 @@ function OnMsg.UIReady()
         while true do
             WaitMsg("OnRender")
             if ResourceOverviewObj and UICity then
+                InfoBar.FormatInt = LocaleInt
                 if rawget(_G, "ModConfig") then
                     InfoBar.full_width = ModConfig:Get("InfoBar", "FullWidth")
                     InfoBar.show_clock = ModConfig:Get("InfoBar", "Clock")
                     InfoBar.y_offset = ModConfig:Get("InfoBar", "YOffset")
+                    if ModConfig:Get("InfoBar", "AbbrevResources") then
+                        InfoBar.FormatInt = InfoBar.AbbrevInt
+                    end
                 end
                 InfoBar:AddInfoBar()
-                UpdateInfoBar()
+                InfoBar:Update()
                 break
             end
         end
@@ -454,14 +471,39 @@ function OnMsg.ModConfigReady()
         min = 0,
         default = 0
     })
+    -- There's a translation specified for the thousands separator, but not for the decimal point.
+    -- In practice, the usual situation is that they're either dot or comma, so we can make a pretty
+    -- good guess by looking at what's used for the thousands separator.
+    if _InternalTranslate(T{1000685, ","}) == "," then
+        -- The thousands separator is a comma, which implies that the decimal must use a dot
+        InfoBar.decimal = '.'
+    else
+        -- The thousands separator is presumably either a dot or a space
+        InfoBar.decimal = ','
+    end
+    ModConfig:RegisterOption("InfoBar", "AbbrevResources", {
+        name = T{
+            InfoBar.StringIdBase + 11, "Abbreviate Resource Counts"
+        },
+        desc = T{
+            InfoBar.StringIdBase + 12, "When resource counts are over a thousand, show them in"
+            .." shortened form (1<decimal>2k, 6k, etc).", decimal=InfoBar.decimal
+        },
+        type = "boolean",
+        default = false
+    })
+    lcPrint(3)
     -- Since this mod doesn't require ModConfig, it can't wait about for it and therefore might have
     -- already created the bar with the default settings, so we need to check
     InfoBar.full_width = ModConfig:Get("InfoBar", "FullWidth")
     InfoBar.show_clock = ModConfig:Get("InfoBar", "Clock")
     InfoBar.y_offset = ModConfig:Get("InfoBar", "YOffset")
-    if InfoBar.full_width or InfoBar.clock then
+    if ModConfig:Get("InfoBar", "AbbrevResources") then
+        InfoBar.FormatInt = InfoBar.AbbrevInt
+    end
+    if InfoBar.full_width or InfoBar.clock or InfoBar.y_offset then
         InfoBar:AddInfoBar()
-        UpdateInfoBar()
+        InfoBar:Update()
     end
     InfoBar.SetScrollSensitivity(ModConfig:Get("InfoBar", "ScrollSensitivity"))
 end
@@ -477,9 +519,15 @@ function OnMsg.ModConfigChanged(mod_id, option_id, value)
             InfoBar.show_clock = value
         elseif option_id == "YOffset" then
             InfoBar.y_offset = value
+        elseif option_id == "AbbrevResources" then
+            if value then
+                InfoBar.FormatInt = InfoBar.AbbrevInt
+            else
+                InfoBar.FormatInt = LocaleInt
+            end
         end
         InfoBar:AddInfoBar()
-        UpdateInfoBar()
+        InfoBar:Update()
     end
 end
 
