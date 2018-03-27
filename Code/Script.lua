@@ -284,6 +284,10 @@ function UpdateGridResourceDisplay(interface, resource)
 end
 
 function UpdateStandardResourceDisplay(interface, resource)
+    if not ResourceOverviewObj.data[resource] then
+        -- the object is here, but it doesn't seem to be initialised yet
+        return
+    end
     local available = ResourceOverviewObj:GetAvailable(resource) / 1000
     interface["idResourceBar"..resource.."Display"]:SetText(LocaleInt(available))
 end
@@ -378,7 +382,7 @@ function OnMsg.UIReady()
         while true do
             WaitMsg("OnRender")
             if ResourceOverviewObj and UICity then
-                if ModConfig then
+                if rawget(_G, "ModConfig") then
                     InfoBar.full_width = ModConfig:Get("InfoBar", "FullWidth")
                     InfoBar.show_clock = ModConfig:Get("InfoBar", "Clock")
                     InfoBar.y_offset = ModConfig:Get("InfoBar", "YOffset")
@@ -483,7 +487,7 @@ end
 -- inserting new items into the UI, by firing a "UIReady" message. They use the "g_UIReady" global
 -- to record when this message has been sent, in order to make it possible to include the same code
 -- in multiple mods without ending up with the message sent multiple times.
-if _G.g_UIReady == nil then
+if rawget(_G, "g_UIReady") == nil then
     -- Check _G explicitly, to avoid the "Attempt to use an undefined global 'g_UIReady'" error
     g_UIReady = false
 end
