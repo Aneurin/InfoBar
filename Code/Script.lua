@@ -28,10 +28,13 @@ function InfoBar:AddInfoBar()
     end
     self:DeleteClockThread()
     local this_mod_dir = debug.getinfo(2, "S").source:sub(2, -16)
+    if not self.y_offset then
+        self.y_offset = 0
+    end
     self.bar = XWindow:new({
         Id = "idInfoBar",
         VAlign = "top",
-        Margins = box(0, -1, 0, 0),
+        Margins = box(0, self.y_offset - 1, 0, 0),
         Padding = box(8, 0, 8, 0),
         Background = RGBA(0, 20, 40, 200),
         BorderWidth = 1,
@@ -375,10 +378,10 @@ function OnMsg.UIReady()
         while true do
             WaitMsg("OnRender")
             if ResourceOverviewObj and UICity then
-                InfoBar.full_width = false
                 if ModConfig then
                     InfoBar.full_width = ModConfig:Get("InfoBar", "FullWidth")
                     InfoBar.show_clock = ModConfig:Get("InfoBar", "Clock")
+                    InfoBar.y_offset = ModConfig:Get("InfoBar", "YOffset")
                 end
                 InfoBar:AddInfoBar()
                 UpdateInfoBar()
@@ -435,10 +438,23 @@ function OnMsg.ModConfigReady()
         },
         default = false
     })
+    ModConfig:RegisterOption("InfoBar", "YOffset", {
+        name = T{
+            InfoBar.StringIdBase + 9, "Move the Bar Down"
+        },
+        desc = T{
+            InfoBar.StringIdBase + 10, "Add an offset to the bar's vertical position, to make room"
+            .." for the Cheats Menu, for example."
+        },
+        type = "number",
+        min = 0,
+        default = 0
+    })
     -- Since this mod doesn't require ModConfig, it can't wait about for it and therefore might have
     -- already created the bar with the default settings, so we need to check
     InfoBar.full_width = ModConfig:Get("InfoBar", "FullWidth")
     InfoBar.show_clock = ModConfig:Get("InfoBar", "Clock")
+    InfoBar.y_offset = ModConfig:Get("InfoBar", "YOffset")
     if InfoBar.full_width or InfoBar.clock then
         InfoBar:AddInfoBar()
         UpdateInfoBar()
@@ -455,6 +471,8 @@ function OnMsg.ModConfigChanged(mod_id, option_id, value)
             return
         elseif option_id == "Clock" then
             InfoBar.show_clock = value
+        elseif option_id == "YOffset" then
+            InfoBar.y_offset = value
         end
         InfoBar:AddInfoBar()
         UpdateInfoBar()
