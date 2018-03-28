@@ -500,6 +500,8 @@ function OnMsg.ModConfigReady()
     InfoBar.y_offset = ModConfig:Get("InfoBar", "YOffset")
     if ModConfig:Get("InfoBar", "AbbrevResources") then
         InfoBar.FormatInt = InfoBar.AbbrevInt
+    else
+        InfoBar.FormatInt = LocaleInt
     end
     if InfoBar.full_width or InfoBar.clock or InfoBar.y_offset then
         InfoBar:AddInfoBar()
