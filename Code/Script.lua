@@ -286,14 +286,17 @@ function InfoBar:UpdateGridResourceDisplay(interface, resource)
         return
     end
     local net = (produced - required) / 1000
-    interface["idResourceBar"..resource.."Display"]:SetText(self.FormatInt(net))
-    if net >= 0 then
-        interface["idResourceBar"..resource.."Display"]:SetTextColor(RGB(0, 255, 0))
-        interface["idResourceBar"..resource.."Display"]:SetRolloverTextColor(RGB(0, 255, 0))
-    else
-        interface["idResourceBar"..resource.."Display"]:SetTextColor(RGB(255, 0, 0))
-        interface["idResourceBar"..resource.."Display"]:SetRolloverTextColor(RGB(255, 0, 0))
+    local text = net >= 0 and "<green><net>" or "<red><net>"
+    if self.show_grid_stock then
+        text = text.."<white> (<stored>)"
     end
+    interface["idResourceBar"..resource.."Display"]:SetText(T{
+        text,
+        net=self.FormatInt(net),
+        stored=self.FormatInt(
+            ResourceOverview['GetTotalStored'..resource](ResourceOverviewObj) / 1000
+        )
+    })
 end
 
 function InfoBar:UpdateStandardResourceDisplay(interface, resource)
@@ -400,6 +403,7 @@ function OnMsg.UIReady()
                     InfoBar.full_width = ModConfig:Get("InfoBar", "FullWidth")
                     InfoBar.show_clock = ModConfig:Get("InfoBar", "Clock")
                     InfoBar.y_offset = ModConfig:Get("InfoBar", "YOffset")
+                    InfoBar.show_grid_stock = ModConfig:Get("InfoBar", "ShowGridStock")
                     if ModConfig:Get("InfoBar", "AbbrevResources") then
                         InfoBar.FormatInt = InfoBar.AbbrevInt
                     end
@@ -492,12 +496,23 @@ function OnMsg.ModConfigReady()
         type = "boolean",
         default = false
     })
-    lcPrint(3)
+    ModConfig:RegisterOption("InfoBar", "ShowGridStock", {
+        name = T{
+            InfoBar.StringIdBase + 13, "Show Stored Grid Resources"
+        },
+        desc = T{
+            InfoBar.StringIdBase + 14, "In the Grid Resources section, show the current storage in"
+            .." addition to the surplus/deficit."
+        },
+        type = "boolean",
+        default = false
+    })
     -- Since this mod doesn't require ModConfig, it can't wait about for it and therefore might have
     -- already created the bar with the default settings, so we need to check
     InfoBar.full_width = ModConfig:Get("InfoBar", "FullWidth")
     InfoBar.show_clock = ModConfig:Get("InfoBar", "Clock")
     InfoBar.y_offset = ModConfig:Get("InfoBar", "YOffset")
+    InfoBar.show_grid_stock = ModConfig:Get("InfoBar", "ShowGridStock")
     if ModConfig:Get("InfoBar", "AbbrevResources") then
         InfoBar.FormatInt = InfoBar.AbbrevInt
     else
@@ -521,6 +536,8 @@ function OnMsg.ModConfigChanged(mod_id, option_id, value)
             InfoBar.show_clock = value
         elseif option_id == "YOffset" then
             InfoBar.y_offset = value
+        elseif option_id == "ShowGridStock" then
+            InfoBar.show_grid_stock = value
         elseif option_id == "AbbrevResources" then
             if value then
                 InfoBar.FormatInt = InfoBar.AbbrevInt
