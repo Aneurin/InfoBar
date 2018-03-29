@@ -39,6 +39,7 @@ function InfoBar:AddInfoBar()
         Background = RGBA(0, 20, 40, 200),
         BorderWidth = 1,
     }, interface)
+    self.bar:SetScaleModifier(point(self.ui_scale * 10, self.ui_scale * 10))
     if self.full_width then
         self.bar:SetLayoutMethod("Box")
         self.bar:SetHAlign("stretch")
@@ -399,11 +400,13 @@ function OnMsg.UIReady()
             WaitMsg("OnRender")
             if ResourceOverviewObj and UICity then
                 InfoBar.FormatInt = LocaleInt
+                InfoBar.ui_scale = 100
                 if rawget(_G, "ModConfig") then
                     InfoBar.full_width = ModConfig:Get("InfoBar", "FullWidth")
                     InfoBar.show_clock = ModConfig:Get("InfoBar", "Clock")
                     InfoBar.y_offset = ModConfig:Get("InfoBar", "YOffset")
                     InfoBar.show_grid_stock = ModConfig:Get("InfoBar", "ShowGridStock")
+                    InfoBar.ui_scale = ModConfig:Get("InfoBar", "UIScale")
                     if ModConfig:Get("InfoBar", "AbbrevResources") then
                         InfoBar.FormatInt = InfoBar.AbbrevInt
                     end
@@ -507,12 +510,24 @@ function OnMsg.ModConfigReady()
         type = "boolean",
         default = false
     })
+    ModConfig:RegisterOption("InfoBar", "UIScale", {
+        name = T{InfoBar.StringIdBase + 15, "Set Custom Scale"},
+        desc = T{InfoBar.StringIdBase + 16, "Change the scale of the Info Bar, independently of"
+            .." the main game UI scale."},
+        label = T{InfoBar.StringIdBase + 17, "<percent(value)>"},
+        type = "slider",
+        default = 100,
+        min = 50,
+        max = 200,
+        step = 10,
+    })
     -- Since this mod doesn't require ModConfig, it can't wait about for it and therefore might have
     -- already created the bar with the default settings, so we need to check
     InfoBar.full_width = ModConfig:Get("InfoBar", "FullWidth")
     InfoBar.show_clock = ModConfig:Get("InfoBar", "Clock")
     InfoBar.y_offset = ModConfig:Get("InfoBar", "YOffset")
     InfoBar.show_grid_stock = ModConfig:Get("InfoBar", "ShowGridStock")
+    InfoBar.ui_scale = ModConfig:Get("InfoBar", "UIScale")
     if ModConfig:Get("InfoBar", "AbbrevResources") then
         InfoBar.FormatInt = InfoBar.AbbrevInt
     else
@@ -544,6 +559,8 @@ function OnMsg.ModConfigChanged(mod_id, option_id, value)
             else
                 InfoBar.FormatInt = LocaleInt
             end
+        elseif option_id == "UIScale" then
+            InfoBar.ui_scale = value
         end
         InfoBar:AddInfoBar()
         InfoBar:Update()
