@@ -470,10 +470,10 @@ function OnMsg.ModConfigReady()
     })
     ModConfig:RegisterOption("InfoBar", "YOffset", {
         name = T{
-            InfoBar.StringIdBase + 9, "Move the Bar Down"
+            InfoBar.StringIdBase + 11, "Move the Bar Down"
         },
         desc = T{
-            InfoBar.StringIdBase + 10, "Add an offset to the bar's vertical position, to make room"
+            InfoBar.StringIdBase + 12, "Add an offset to the bar's vertical position, to make room"
             .." for the Cheats Menu, for example."
         },
         type = "number",
@@ -492,10 +492,10 @@ function OnMsg.ModConfigReady()
     end
     ModConfig:RegisterOption("InfoBar", "AbbrevResources", {
         name = T{
-            InfoBar.StringIdBase + 11, "Abbreviate Resource Counts"
+            InfoBar.StringIdBase + 13, "Abbreviate Resource Counts"
         },
         desc = T{
-            InfoBar.StringIdBase + 12, "When resource counts are over a thousand, show them in"
+            InfoBar.StringIdBase + 14, "When resource counts are over a thousand, show them in"
             .." shortened form (1<decimal>2k, 6k, etc).", decimal=InfoBar.decimal
         },
         type = "boolean",
@@ -503,20 +503,20 @@ function OnMsg.ModConfigReady()
     })
     ModConfig:RegisterOption("InfoBar", "ShowGridStock", {
         name = T{
-            InfoBar.StringIdBase + 13, "Show Stored Grid Resources"
+            InfoBar.StringIdBase + 15, "Show Stored Grid Resources"
         },
         desc = T{
-            InfoBar.StringIdBase + 14, "In the Grid Resources section, show the current storage in"
+            InfoBar.StringIdBase + 16, "In the Grid Resources section, show the current storage in"
             .." addition to the surplus/deficit."
         },
         type = "boolean",
         default = false
     })
     ModConfig:RegisterOption("InfoBar", "UIScale", {
-        name = T{InfoBar.StringIdBase + 15, "Set Custom Scale"},
-        desc = T{InfoBar.StringIdBase + 16, "Change the scale of the Info Bar, independently of"
+        name = T{InfoBar.StringIdBase + 17, "Set Custom Scale"},
+        desc = T{InfoBar.StringIdBase + 18, "Change the scale of the Info Bar, independently of"
             .." the main game UI scale."},
-        label = T{InfoBar.StringIdBase + 17, "<percent(value)>"},
+        label = "<percent(value)>",
         type = "slider",
         default = 100,
         min = 50,
