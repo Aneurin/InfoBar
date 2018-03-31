@@ -24,6 +24,7 @@ function InfoBar:AddInfoBar()
     if interface['idInfoBar'] then
         -- The resource bar is already there, so this must have been called more than once. This
         -- might be a request to rebuild it, so remove the existing one and start again
+        self.ready = false
         interface['idInfoBar']:delete()
     end
     self:DeleteClockThread()
@@ -198,6 +199,7 @@ function InfoBar:AddInfoBar()
         end
         self:StartClockThread()
     end
+    self.ready = true
 end
 
 -- Largely copied from Dome:GetUISectionCitizensRollover(), with the dome-specific sections removed
@@ -310,7 +312,7 @@ function InfoBar:UpdateStandardResourceDisplay(interface, resource)
 end
 
 function InfoBar:Update()
-    if not (ResourceOverviewObj and UICity) then return end
+    if not self.ready then return end
 
     local interface = GetXDialog("InGameInterface")
     if not interface then return end
