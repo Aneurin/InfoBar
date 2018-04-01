@@ -4,8 +4,12 @@ InfoBar.StringIdBase = 76827346
 
 function InfoBar:AddResourceDisplay(parent, resource, icon)
     local min_width = self.full_width and 50 or 30
-    self["idResourceBar"..resource] = XWindow:new({
+    self["idResourceBar"..resource] = XButton:new({
         Id = "idResourceBar"..resource,
+        Background = RGBA(0, 0, 0, 0),
+        RolloverBackground = RGBA(0, 0, 0, 0),
+        PressedBackground = RGBA(0, 0, 0, 0),
+        MouseCursor = false,
         LayoutMethod = "HList",
     }, parent)
     self["idResourceBar"..resource.."Icon"] = XImage:new({
@@ -181,6 +185,21 @@ function InfoBar:AddInfoBar()
     self:AddResourceDisplay(colonist_section, "Homeless", this_mod_dir.."UI/res_homeless.tga")
     self:AddResourceDisplay(colonist_section, "Jobs", this_mod_dir.."UI/res_work.tga")
     self:AddResourceDisplay(colonist_section, "Unemployed", this_mod_dir.."UI/res_unemployed.tga")
+
+    self.idResourceBarHomeless:SetMouseCursor("UI/Cursors/Rollover.tga")
+    self.idResourceBarHomeless.OnPress = function()
+        local colonist = UICity.labels.Homeless and UICity.labels.Homeless[1]
+        if IsValid(colonist) then
+            colonist:Select(HomelessCycle)
+        end
+    end
+    self.idResourceBarUnemployed:SetMouseCursor("UI/Cursors/Rollover.tga")
+    self.idResourceBarUnemployed.OnPress = function()
+        local colonist = UICity.labels.Unemployed and UICity.labels.Unemployed[1]
+        if IsValid(colonist) then
+            colonist:Select(UnemployedCycle)
+        end
+    end
 
     colonist_section:SetRolloverTitle(T{T{547, "Colonists"}, UICity})
     colonist_section:SetRolloverText(T{"<citizens_rollover>",
