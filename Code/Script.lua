@@ -396,6 +396,13 @@ function OnMsg.NewMinute()
     InfoBar:Update()
 end
 
+function OnMsg.TechResearched()
+    -- This is to make sure the rollover templates are updated when you get a new tech that might
+    -- affect them, like the one that converts excess power into research.
+    InfoBar:AddInfoBar()
+    InfoBar:Update()
+end
+
 function OnMsg.UIReady()
     CreateGameTimeThread(function()
         while true do
