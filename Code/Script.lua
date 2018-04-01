@@ -4,18 +4,22 @@ InfoBar.StringIdBase = 76827346
 
 function InfoBar:AddResourceDisplay(parent, resource, icon)
     local min_width = self.full_width and 50 or 30
-    XImage:new({
+    self["idResourceBar"..resource] = XWindow:new({
+        Id = "idResourceBar"..resource,
+        LayoutMethod = "HList",
+    }, parent)
+    self["idResourceBar"..resource.."Icon"] = XImage:new({
         Id = "idResourceBar"..resource.."Icon",
         Image = icon,
         ImageScale = point(500, 500),
-    }, parent)
-    XText:new({
+    }, self["idResourceBar"..resource])
+    self["idResourceBar"..resource.."Display"] = XText:new({
         Id = "idResourceBar"..resource.."Display",
         MinWidth = min_width,
         TextFont = "HexChoice",
         TextColor = RGB(255, 255, 255),
         RolloverTextColor = RGB(255, 255, 255),
-    }, parent)
+    }, self["idResourceBar"..resource])
 end
 
 function InfoBar:AddInfoBar()
@@ -64,7 +68,7 @@ function InfoBar:AddInfoBar()
         RolloverAnchor = "bottom",
     }, left)
 
-    XText:new({
+    self.idResourceBarFundingDisplay = XText:new({
         Id = "idResourceBarFundingDisplay",
         MinWidth = 25,
         TextColor = RGB(255, 255, 255),
@@ -277,7 +281,7 @@ function InfoBar.AbbrevInt(int)
     end
 end
 
-function InfoBar:UpdateGridResourceDisplay(interface, resource)
+function InfoBar:UpdateGridResourceDisplay(resource)
     if not ResourceOverviewObj then
         -- It's probably just not ready yet
         return
@@ -293,7 +297,7 @@ function InfoBar:UpdateGridResourceDisplay(interface, resource)
     if self.show_grid_stock then
         text = text.."<white> (<stored>)"
     end
-    interface["idResourceBar"..resource.."Display"]:SetText(T{
+    self["idResourceBar"..resource.."Display"]:SetText(T{
         text,
         net=self.FormatInt(net),
         stored=self.FormatInt(
@@ -302,13 +306,13 @@ function InfoBar:UpdateGridResourceDisplay(interface, resource)
     })
 end
 
-function InfoBar:UpdateStandardResourceDisplay(interface, resource)
+function InfoBar:UpdateStandardResourceDisplay(resource)
     if not ResourceOverviewObj.data[resource] then
         -- the object is here, but it doesn't seem to be initialised yet
         return
     end
     local available = ResourceOverviewObj:GetAvailable(resource) / 1000
-    interface["idResourceBar"..resource.."Display"]:SetText(self.FormatInt(available))
+    self["idResourceBar"..resource.."Display"]:SetText(self.FormatInt(available))
 end
 
 function InfoBar:Update()
@@ -317,34 +321,34 @@ function InfoBar:Update()
     local interface = GetXDialog("InGameInterface")
     if not interface then return end
 
-    self:UpdateGridResourceDisplay(interface, "Power")
-    self:UpdateGridResourceDisplay(interface, "Air")
-    self:UpdateGridResourceDisplay(interface, "Water")
+    self:UpdateGridResourceDisplay("Power")
+    self:UpdateGridResourceDisplay("Air")
+    self:UpdateGridResourceDisplay("Water")
 
-    self:UpdateStandardResourceDisplay(interface, "Metals")
-    self:UpdateStandardResourceDisplay(interface, "Concrete")
-    self:UpdateStandardResourceDisplay(interface, "Food")
-    self:UpdateStandardResourceDisplay(interface, "PreciousMetals")
+    self:UpdateStandardResourceDisplay("Metals")
+    self:UpdateStandardResourceDisplay("Concrete")
+    self:UpdateStandardResourceDisplay("Food")
+    self:UpdateStandardResourceDisplay("PreciousMetals")
 
-    self:UpdateStandardResourceDisplay(interface, "Polymers")
-    self:UpdateStandardResourceDisplay(interface, "Electronics")
-    self:UpdateStandardResourceDisplay(interface, "MachineParts")
-    self:UpdateStandardResourceDisplay(interface, "Fuel")
+    self:UpdateStandardResourceDisplay("Polymers")
+    self:UpdateStandardResourceDisplay("Electronics")
+    self:UpdateStandardResourceDisplay("MachineParts")
+    self:UpdateStandardResourceDisplay("Fuel")
 
-    interface["idResourceBarResearchDisplay"]:SetText(
+    self["idResourceBarResearchDisplay"]:SetText(
                     self.FormatInt(ResourceOverviewObj:GetEstimatedRP()))
 
-    interface["idResourceBarFundingDisplay"]:SetText(
+    self["idResourceBarFundingDisplay"]:SetText(
                     "$"..LocaleInt(ResourceOverviewObj:GetFunding() / 1000000).." M")
 
     local vacancies = self.FormatInt(GetFreeLivingSpace(UICity))
     local homeless = self.FormatInt(#(UICity.labels.Homeless or empty_table))
     local jobs = self.FormatInt(GetFreeWorkplaces(UICity))
     local unemployed = self.FormatInt(#(UICity.labels.Unemployed or empty_table))
-    interface["idResourceBarAvailableHomesDisplay"]:SetText(vacancies)
-    interface["idResourceBarHomelessDisplay"]:SetText(homeless)
-    interface["idResourceBarJobsDisplay"]:SetText(jobs)
-    interface["idResourceBarUnemployedDisplay"]:SetText(unemployed)
+    self["idResourceBarAvailableHomesDisplay"]:SetText(vacancies)
+    self["idResourceBarHomelessDisplay"]:SetText(homeless)
+    self["idResourceBarJobsDisplay"]:SetText(jobs)
+    self["idResourceBarUnemployedDisplay"]:SetText(unemployed)
 
     -- When you mouse over an element, its tooltip ('rollover') is updated
     -- automatically, but to have it update while it's open, it needs to be
