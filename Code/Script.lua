@@ -220,6 +220,27 @@ function InfoBar:AddInfoBar()
         end
     end
 
+    local clock_container
+    if self.show_mars_time or self.show_clock then
+        clock_container = XWindow:new({
+            LayoutMethod = "HList",
+            LayoutHSpacing = 10,
+        }, self.bar)
+        if self.full_width then
+            clock_container:SetDock("right")
+            clock_container:SetMargins(box(20, 0, 0, 0))
+        end
+    end
+
+    if self.show_mars_time then
+        self.mars_clock = XText:new({
+            TextFont = "HexChoice",
+            TextHAlign = "center",
+            TextColor = RGB(255, 255, 255),
+            RolloverTextColor = RGB(255, 255, 255),
+        }, clock_container)
+    end
+
     if self.show_clock then
         local min_width = (self.show_clock == "seconds") and 75 or 50
         self.clock = XText:new({
@@ -229,11 +250,7 @@ function InfoBar:AddInfoBar()
             HAlign = "right",
             TextColor = RGB(255, 255, 255),
             RolloverTextColor = RGB(255, 255, 255),
-        }, self.bar)
-        if self.full_width then
-            self.clock:SetDock("right")
-            self.clock:SetMargins(box(20, 0, 0, 0))
-        end
+        }, clock_container)
         self:StartClockThread()
     end
     self.ready = true
@@ -438,6 +455,18 @@ function InfoBar:Update()
     XUpdateRolloverWindow(interface["idAdvancedResourceBar"])
     XUpdateRolloverWindow(interface["idResearchBar"])
     XUpdateRolloverWindow(interface["idColonistBar"])
+
+    if self.show_mars_time then
+        local shift_names = {
+            T{541987944858, "First Shift"},
+            T{159665176435, "Second Shift"},
+            T{994186128274, "Night shift"}
+        }
+        self.mars_clock:SetText(T{InfoBar.StringIdBase + 21,"<shift> (<hour>h)",
+            shift = shift_names[CurrentWorkshift],
+            hour = GetTimeOfDay(),
+        })
+    end
 end
 
 function InfoBar.SetScrollSensitivity(sensitivity)
@@ -500,6 +529,7 @@ function OnMsg.UIReady()
                     InfoBar.y_offset = ModConfig:Get("InfoBar", "YOffset")
                     InfoBar.show_grid_stock = ModConfig:Get("InfoBar", "ShowGridStock")
                     InfoBar.ui_scale = ModConfig:Get("InfoBar", "UIScale")
+                    InfoBar.show_mars_time = ModConfig:Get("InfoBar", "MarsClock")
                     if ModConfig:Get("InfoBar", "AbbrevResources") then
                         InfoBar.FormatInt = InfoBar.AbbrevInt
                     end
@@ -614,6 +644,10 @@ function OnMsg.ModConfigReady()
         max = 200,
         step = 10,
     })
+    ModConfig:RegisterOption("InfoBar", "MarsClock", {
+        name = T{InfoBar.StringIdBase + 19, "Show Work Shift/Mars Time"},
+        desc = T{InfoBar.StringIdBase + 20, "Show the active work shift and the time on Mars."},
+    })
     -- Since this mod doesn't require ModConfig, it can't wait about for it and therefore might have
     -- already created the bar with the default settings, so we need to check
     InfoBar.full_width = ModConfig:Get("InfoBar", "FullWidth")
@@ -621,6 +655,7 @@ function OnMsg.ModConfigReady()
     InfoBar.y_offset = ModConfig:Get("InfoBar", "YOffset")
     InfoBar.show_grid_stock = ModConfig:Get("InfoBar", "ShowGridStock")
     InfoBar.ui_scale = ModConfig:Get("InfoBar", "UIScale")
+    InfoBar.show_mars_time = ModConfig:Get("InfoBar", "MarsClock")
     if ModConfig:Get("InfoBar", "AbbrevResources") then
         InfoBar.FormatInt = InfoBar.AbbrevInt
     else
@@ -654,6 +689,8 @@ function OnMsg.ModConfigChanged(mod_id, option_id, value)
             end
         elseif option_id == "UIScale" then
             InfoBar.ui_scale = value
+        elseif option_id == "MarsClock" then
+            InfoBar.show_mars_time = value
         end
         InfoBar:AddInfoBar()
         InfoBar:Update()

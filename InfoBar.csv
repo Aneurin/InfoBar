@@ -18,3 +18,6 @@ ID,Text,Translation
 76827362,"In the Grid Resources section, show the current storage in addition to the surplus/deficit.",
 76827363,Set Custom Scale,
 76827364,"Change the scale of the Info Bar, independently of the main game UI scale.",
+76827365,Show Work Shift/Mars Time,
+76827366,Show the active work shift and the time on Mars.,
+76827367,"<shift> (<hour>h)",
