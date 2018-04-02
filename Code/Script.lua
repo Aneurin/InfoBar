@@ -186,6 +186,14 @@ function InfoBar:AddInfoBar()
     self:AddResourceDisplay(colonist_section, "Jobs", this_mod_dir.."UI/res_work.tga")
     self:AddResourceDisplay(colonist_section, "Unemployed", this_mod_dir.."UI/res_unemployed.tga")
 
+    colonist_section:SetRolloverTitle(T{
+        T{892778823326, "<nbsp>Colonists<right><colonist(ColonistCount)>"},
+        ResourceOverviewObj
+    })
+    colonist_section:SetRolloverText(T{"<citizens_rollover>",
+        citizens_rollover = GetInfoBarCitizensRollover,
+    })
+
     local resources = {
         "Metals", "Concrete", "Food", "PreciousMetals",
         "Polymers", "Electronics", "MachineParts", "Fuel"
@@ -211,11 +219,6 @@ function InfoBar:AddInfoBar()
             colonist:Select(UnemployedCycle)
         end
     end
-
-    colonist_section:SetRolloverTitle(T{T{547, "Colonists"}, UICity})
-    colonist_section:SetRolloverText(T{"<citizens_rollover>",
-        citizens_rollover = GetInfoBarCitizensRollover,
-    })
 
     if self.show_clock then
         local min_width = (self.show_clock == "seconds") and 75 or 50
@@ -249,50 +252,52 @@ function GetInfoBarCitizensRollover()
   end
   local free = GetFreeLivingSpace(UICity)
   local texts = {
-    T({
+    T{
       7622,
       "<center><em>Jobs</em>"
-    }),
-    T({
+    },
+    T{
       548,
       "Unemployed and looking for work<right><colonist(number)>",
       number = UICity.labels.Unemployed and #UICity.labels.Unemployed or 0,
       empty_table
-    }),
-    T({
+    },
+    T{
       549,
       "Vacant work slots<right><colonist(number)>",
       number = ui_on_vacant
-    }),
-    T({
+    },
+    T{
       550,
       "Disabled work slots<right><colonist(number)>",
       number = ui_off_vacant
-    }),
-    T({
+    },
+    T{
       7346,
       "Renegades<right><colonist(number)>",
       number = renegades
-    }),
-    T({
+    },
+    T{
       7623,
       "<newline><center><em>Living space</em>"
-    }),
-    T({
+    },
+    T{
       552,
       "Vacant residential slots<right><colonist(number)>",
       number = free
-    }),
-    T({
+    },
+    T{
       7624,
       "Vacant nursery slots<right><colonist(number)>",
       number = GetFreeLivingSpace(UICity, true) - free
-    }),
-    T({
+    },
+    T{
       551,
       "Homeless<right><colonist(number)>",
       number = UICity.labels.Homeless and #UICity.labels.Homeless or 0
-    }),
+    },
+    T{553, "<newline><center><em>Age Groups</em>"},
+    ResourceOverviewObj:GetAgeGroupsText(),
   }
   return table.concat(texts, "<newline><left>")
 end
