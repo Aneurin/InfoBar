@@ -544,6 +544,20 @@ end
 
 function OnMsg.ModConfigReady()
     ModConfig:RegisterMod("InfoBar", T{InfoBar.StringIdBase, "Info Bar"})
+    ModConfig:RegisterOption("InfoBar", "OptionalFeatures", {
+        name = T{
+            InfoBar.StringIdBase + 22, "<em><center><scale 1100>Optional Features"
+        },
+        type = "note",
+        order = 9,
+    })
+    ModConfig:RegisterOption("InfoBar", "UIAdjustmentHeader", {
+        name = T{
+            InfoBar.StringIdBase + 23, "<em><center><scale 1100>Interface Adjustments"
+        },
+        type = "note",
+        order = 29,
+    })
     ModConfig:RegisterOption("InfoBar", "FullWidth", {
         name = T{
             InfoBar.StringIdBase + 1, "Full Width Bar"
@@ -554,7 +568,8 @@ function OnMsg.ModConfigReady()
             .." with more spacing between elements."
         },
         type = "boolean",
-        default = false
+        default = false,
+        order = 30,
     })
     local screen_scroll_default = const.DefaultCameraRTS.ScrollBorder
     ModConfig:RegisterOption("InfoBar", "ScrollSensitivity", {
@@ -572,7 +587,8 @@ function OnMsg.ModConfigReady()
             {value = 1, label = T{InfoBar.StringIdBase + 5, "Minimum"}},
             {value = 0, label = T{InfoBar.StringIdBase + 6, "Disabled"}}
         },
-        default = screen_scroll_default
+        default = screen_scroll_default,
+        order = 40,
     })
     ModConfig:RegisterOption("InfoBar", "Clock", {
         name = T{
@@ -587,7 +603,8 @@ function OnMsg.ModConfigReady()
             {value = "minutes", label = T{InfoBar.StringIdBase + 9, "Minutes"}},
             {value = "seconds", label = T{InfoBar.StringIdBase + 10, "Seconds"}}
         },
-        default = false
+        default = false,
+        order = 20,
     })
     ModConfig:RegisterOption("InfoBar", "YOffset", {
         name = T{
@@ -599,7 +616,8 @@ function OnMsg.ModConfigReady()
         },
         type = "number",
         min = 0,
-        default = 0
+        default = 0,
+        order = 30,
     })
     -- There's a translation specified for the thousands separator, but not for the decimal point.
     -- In practice, the usual situation is that they're either dot or comma, so we can make a pretty
@@ -620,7 +638,8 @@ function OnMsg.ModConfigReady()
             .." shortened form (1<decimal>2k, 6k, etc).", decimal=InfoBar.decimal
         },
         type = "boolean",
-        default = false
+        default = false,
+        order = 30,
     })
     ModConfig:RegisterOption("InfoBar", "ShowGridStock", {
         name = T{
@@ -631,7 +650,8 @@ function OnMsg.ModConfigReady()
             .." addition to the surplus/deficit."
         },
         type = "boolean",
-        default = false
+        default = false,
+        order = 10,
     })
     ModConfig:RegisterOption("InfoBar", "UIScale", {
         name = T{InfoBar.StringIdBase + 17, "Set Custom Scale"},
@@ -643,10 +663,12 @@ function OnMsg.ModConfigReady()
         min = 50,
         max = 200,
         step = 10,
+        order = 30,
     })
     ModConfig:RegisterOption("InfoBar", "MarsClock", {
         name = T{InfoBar.StringIdBase + 19, "Show Work Shift/Mars Time"},
         desc = T{InfoBar.StringIdBase + 20, "Show the active work shift and the time on Mars."},
+        order = 20,
     })
     -- Since this mod doesn't require ModConfig, it can't wait about for it and therefore might have
     -- already created the bar with the default settings, so we need to check
