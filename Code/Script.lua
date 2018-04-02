@@ -186,6 +186,17 @@ function InfoBar:AddInfoBar()
     self:AddResourceDisplay(colonist_section, "Jobs", this_mod_dir.."UI/res_work.tga")
     self:AddResourceDisplay(colonist_section, "Unemployed", this_mod_dir.."UI/res_unemployed.tga")
 
+    local resources = {
+        "Metals", "Concrete", "Food", "PreciousMetals",
+        "Polymers", "Electronics", "MachineParts", "Fuel"
+    }
+    for _, resource in ipairs(resources) do
+        self["idResourceBar"..resource]:SetMouseCursor("UI/Cursors/Rollover.tga")
+        self["idResourceBar"..resource].OnPress = function()
+            InfoBar.SelectNextObjectWithResource(resource)
+        end
+    end
+
     self.idResourceBarHomeless:SetMouseCursor("UI/Cursors/Rollover.tga")
     self.idResourceBarHomeless.OnPress = function()
         local colonist = UICity.labels.Homeless and UICity.labels.Homeless[1]
@@ -286,6 +297,51 @@ function GetInfoBarCitizensRollover()
   return table.concat(texts, "<newline><left>")
 end
 
+function InfoBar.ObjectHasResource(obj, resource)
+    if type(obj.stockpiled_amount) == "table" and (obj.stockpiled_amount[resource] or 0) > 0 then
+        return true
+    elseif obj.resource == resource and (obj.amount or 0) > 0 then
+        return true
+    elseif obj.producers and obj.producers[resource] and (obj.producers[resource].total_stockpiled or 0) > 0 then
+        return true
+    end
+    return false
+end
+
+function InfoBar.GetObjectsWithResource(resource)
+    if not UICity then return {} end
+    local by_obj = {}
+    local by_idx = {}
+    local idx = 0
+    -- Spaceship comes under ResourceStockpile, transport under Unit and ResourceStockpile, drones
+    -- under Unit, producers under Building, storage under ResourceStockpile and Building, but
+    -- CargoShuttle is its own thing.
+    for _, label in ipairs({'ResourceStockpile', 'Building', 'CargoShuttle', 'Unit'}) do
+        for _, obj in pairs(UICity.labels[label] or {}) do
+            if InfoBar.ObjectHasResource(obj, resource) then
+                -- Check if we've already found this (it may come under two labels that we've looked
+                -- at)
+                if not by_obj[obj] then
+                    idx = idx + 1
+                    by_obj[obj] = idx
+                    by_idx[idx] = obj
+                end
+            end
+        end
+    end
+    return by_obj, by_idx
+end
+
+function InfoBar.SelectNextObjectWithResource(resource)
+    local by_obj, by_idx = InfoBar.GetObjectsWithResource(resource)
+    local count = #by_idx
+    local idx = (by_obj[SelectedObj] or 0) + 1
+    if idx > count then
+        idx = 1
+    end
+    SelectObj(by_idx[idx])
+    ViewObjectMars(by_idx[idx])
+end
 
 function InfoBar.AbbrevInt(int)
     if int > 10000 then
